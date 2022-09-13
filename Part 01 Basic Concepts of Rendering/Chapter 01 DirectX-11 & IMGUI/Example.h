@@ -3,26 +3,19 @@
 #include <windows.h>
 #include <memory>
 #include <iostream>
-#include <d3d11.h>
-#include <d3dcompiler.h>
+#include <d3d11.h>		// DirectX 3d 11th
+#include <d3dcompiler.h>// DirectX 3d 컴파일러(VS, PS을 컴파일합니다.)
 #include <vector>
 
-// 수학의 4차원 벡터(vector)를 의미합니다. 
-// std::vector와는 다릅니다.
-struct Vec4
-{
-	float v[4];
-};
+// 수학의 4차원 벡터(vector)를 의미합니다. std::vector와는 다릅니다.
+struct Vec4 { float v[4]; };
 
-struct Vec2
-{
-	float v[2];
-};
+struct Vec2 { float v[2]; };
 
 struct Vertex
 {
-	Vec4 pos;
-	Vec2 uv;
+	Vec4 pos;// 3차원 좌표로 Vec4를 사용합니다.
+	Vec2 uv;// texture coordinates
 };
 
 class Example
@@ -39,14 +32,15 @@ public:
 		ID3DBlob* vertexBlob = nullptr;
 		ID3DBlob* pixelBlob = nullptr;
 		ID3DBlob* errorBlob = nullptr;
-
+		
+		// Vertex Shader
 		if (FAILED(D3DCompileFromFile(L"VS.hlsl", 0, 0, "main", "vs_5_0", 0, 0, &vertexBlob, &errorBlob)))
 		{
 			if (errorBlob) {
 				std::cout << "Vertex shader compile error\n" << (char*)errorBlob->GetBufferPointer() << std::endl;
 			}
 		}
-
+		// Pixel Shader
 		if (FAILED(D3DCompileFromFile(L"PS.hlsl", 0, 0, "main", "ps_5_0", 0, 0, &pixelBlob, &errorBlob)))
 		{
 			if (errorBlob) {
@@ -75,21 +69,21 @@ public:
 
 		DXGI_SWAP_CHAIN_DESC swapChainDesc;
 		ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
-		swapChainDesc.BufferDesc.Width = width;                   // set the back buffer width
-		swapChainDesc.BufferDesc.Height = height;                 // set the back buffer height
-		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;    // use 32-bit color
-		swapChainDesc.BufferCount = 2;                                   // one back buffer
+		swapChainDesc.BufferDesc.Width = width;							// set the back buffer width
+		swapChainDesc.BufferDesc.Height = height;						// set the back buffer height
+		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;	// use 32-bit color
+		swapChainDesc.BufferCount = 2;									// one back buffer
 		swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
 		swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
-		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;     // how swap chain is to be used
-		swapChainDesc.OutputWindow = window;                               // the window to be used
-		swapChainDesc.SampleDesc.Count = 1;                              // how many multisamples
-		swapChainDesc.Windowed = TRUE;                                   // windowed/full-screen mode
-		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;    // allow full-screen switching
+		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;	// how swap chain is to be used
+		swapChainDesc.OutputWindow = window;							// the window to be used
+		swapChainDesc.SampleDesc.Count = 1;								// how many multisamples
+		swapChainDesc.Windowed = TRUE;									// windowed/full-screen mode
+		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;	// allow full-screen switching
 		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
 		UINT createDeviceFlags = 0;
-		//createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+		// createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 
 		const D3D_FEATURE_LEVEL featureLevelArray[1] = { D3D_FEATURE_LEVEL_11_0};
 		if (FAILED(D3D11CreateDeviceAndSwapChain(NULL,
@@ -108,7 +102,7 @@ public:
 			std::cout << "D3D11CreateDeviceAndSwapChain() error" << std::endl;
 		}
 
-		// CreateRenderTarget
+		// Create Render Target
 		ID3D11Texture2D* pBackBuffer;
 		swapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
 		if (pBackBuffer)
@@ -235,9 +229,39 @@ public:
 
 	void Update()
 	{
-		std::vector<Vec4> pixels(canvasWidth * canvasHeight, Vec4{0.8f, 0.8f, 0.8f, 1.0f});
-		pixels[0 + canvasWidth * 0] = Vec4{ 1.0f, 0.0f, 0.0f, 1.0f };
-		pixels[1 + canvasWidth * 0] = Vec4{ 1.0f, 1.0f, 0.0f, 1.0f };
+		// 리스트 초기화로 Red, Green, Blue, Alpha값을 지정합니다.
+		// 0 ~ 255까지 unsigned char(uint8_t)로 나타낼 수도 있습니다.
+		// std::vector<Vec4> pixels(canvasWidth * canvasHeight, Vec4{ 0.8f, 0.8f, 0.8f, 1.0f });
+		std::vector<Vec4> pixels(canvasWidth * canvasHeight, Vec4{ backgroundColor[0], backgroundColor[1], backgroundColor[2], 1.0f });
+		
+#pragma region Example 01. Red, Yello, Green Dots
+		/* pixels[0 + canvasWidth * 0] = Vec4{1.0f, 0.0f, 0.0f, 1.0f};// Red
+		pixels[1 + canvasWidth * 0] = Vec4{ 1.0f, 1.0f, 0.0f, 1.0f };// Yello
+		pixels[2 + canvasWidth * 0] = Vec4{ 0.0f, 0.0f, 1.0f, 1.0f };// Blue */
+#pragma endregion
+
+#pragma region Example 02. Racing Red Dot
+		/* static int i;
+		if (i < pixels.size() - 1) { ++i; }
+		else { i = 0; }
+		pixels[i] = Vec4{ 1.0f, 0.0f, 0.0f, 1.0f }; */
+#pragma endregion
+
+#pragma region Example 03. Racing RGB Dot
+		/* static int i;
+		if (i < pixels.size() - 1) { ++i; }
+		else { i = 0; }
+
+		if (i % 3 == 0) {
+			pixels[i] = Vec4{ 1.0f, 0.0f, 0.0f, 1.0f };
+		}
+		else if (i % 3 == 1) {
+			pixels[i] = Vec4{ 0.0f, 1.0f, 0.0f, 1.0f };
+		}
+		else {
+			pixels[i] = Vec4{ .0f, 0.0f, 1.0f, 1.0f };
+		} */
+#pragma endregion
 
 		// Update texture buffer
 		D3D11_MAPPED_SUBRESOURCE ms;

@@ -1,3 +1,4 @@
+// Vertex Shader(High Level Shader Language)
 struct VSInput
 {
     float4 position : POSITION;

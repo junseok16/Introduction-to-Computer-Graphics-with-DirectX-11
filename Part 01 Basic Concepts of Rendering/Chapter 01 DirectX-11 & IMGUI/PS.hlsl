@@ -1,3 +1,4 @@
+// Pixel Shader(High Level Shader Language)
 Texture2D baseColorTexture : register(t0);
 SamplerState baseColorSampler : register(s0);
 
